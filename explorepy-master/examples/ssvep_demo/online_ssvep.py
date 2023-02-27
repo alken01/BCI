@@ -12,10 +12,12 @@ def main():
     parser = argparse.ArgumentParser(description="A script to run a simple SSVEP Experiment")
     parser.add_argument("-n", "--name", dest="name", type=str, help="Name of the device.")
     parser.add_argument("-d", "--duration", dest="duration", type=int, help="Duration of the experiment")
+    parser.add_argument("-f", "--filename", dest="filename", type=str, help="Record file name")
     args = parser.parse_args()
 
     explore = Explore()
     explore.connect(device_name=args.name)
+    explore.record_data(file_name=args.filename, file_type='csv')
 
     target_pos = [(-.6, -.6), (-.6, .6), (.6, .6), (.6, -.6)]
     target_labels = ['\u2199', '\u2196', '\u2197', '\u2198']
@@ -29,7 +31,7 @@ def main():
 
     experiment.run(args.duration)
     experiment.show_statistics()
-    experiment.save_data()
+    explore.stop_recording()
 
 
 if __name__ == '__main__':
