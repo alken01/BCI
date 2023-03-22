@@ -45,35 +45,44 @@ def filt(sig,fs=250, lf=1, hf=30):
 
 
 
-def psd_plot_interactive(filt_signal, chan_name, nperseg_slider, nfft_slider, title='', fs=250, x_min=1, x_lim=30, y_lim=125, line=None):
-    n_samples = filt_signal.shape[1]
 
-    # Generate a time vector for the signal
-    t = np.arange(n_samples) / fs
-
-    # Create the slider widgets
+def psd_plot_interactive(eeg_data, chan_name, nperseg_slider, nfft_slider, fs=250, x_min=1, x_lim=30, y_lim=125):
     
-    # Create the plot function
     def plot_psd(nperseg, nfft):
-        
-        fig, ax = plt.subplots(figsize=(10, 5))
-        for i in range(len(filt_signal)):
-            f, psd = signal.welch(filt_signal[i], fs=fs, nperseg=nperseg*fs, noverlap=0, nfft=nfft*fs)
-            ax.plot(f, psd, label='{}'.format(chan_name[i]))
-        if line:
-            ax.axvline(x=line, color='gray', linestyle='--')
-            ax.text(line+0.2, 20, 'f = '+str(line)+'Hz', fontsize=12, color='gray')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Amplitude')
-        ax.set_xlim(x_min, x_lim)
-        ax.set_ylim(0, y_lim)
-        ax.legend()
-        ax.set_title('PSD ' + title)
-        plt.tight_layout()
-        plt.show()
+        for eeg in eeg_data:
+            n_samples = eeg.filtered_signal.shape[1]
+            t = np.arange(n_samples) / fs
+            title = eeg.title
+            line = eeg.stimulus_frequency
+            
+            fig, ax = plt.subplots(figsize=(10, 5))
+            for i in range(len(eeg.filtered_signal)):
+                f, psd = signal.welch(eeg.filtered_signal[i], fs=fs, nperseg=nperseg*fs, noverlap=0, nfft=nfft*fs)
+                ax.plot(f, psd, label='{}'.format(chan_name[i]))
+            if line:
+                ax.axvline(x=line, color='gray', linestyle='--')
+                ax.text(line+0.2, 20, 'f = '+str(line)+'Hz', fontsize=12, color='gray')
+            ax.set_xlabel('Frequency (Hz)')
+            ax.set_ylabel('Amplitude')
+            ax.set_xlim(x_min, x_lim)
+            ax.set_ylim(0, y_lim)
+            ax.legend()
+            ax.set_title('PSD ' + title)
+            plt.tight_layout()
+            plt.show()
 
-    # Link the slider widgets to the plot function
-    widgets.interact(plot_psd, nperseg=nperseg_slider, nfft=nfft_slider);
+    widgets.interact(plot_psd, nperseg=nperseg_slider, nfft=nfft_slider)
+
+
+def update_nfft_range(*args):
+    nfft_slider.min = nperseg_slider.value
+
+nperseg_slider = widgets.IntSlider(value=20, min=1, max=20, step=1, description='nperseg*fs:')
+nfft_slider = widgets.IntSlider(value=20, min=nperseg_slider.value, max=20, step=1, description='nfft*fs:')
+
+nperseg_slider.observe(update_nfft_range, 'value')
+
+psd_plot_interactive(eeg_data, chan_name, nperseg_slider, nfft_slider)
 
 
 def amplitude_plot(filt_signal, chan_name, title = '', fs=250, lim = 150,xlim=None):
