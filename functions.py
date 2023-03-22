@@ -44,9 +44,7 @@ def filt(sig,fs=250, lf=1, hf=30):
     return filt_sig
 
 
-
-
-def psd_plot_interactive(eeg_data, chan_name, nperseg_slider, nfft_slider, fs=250, x_min=1, x_lim=30, y_lim=125):
+def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=250, x_min=1, x_lim=30, y_lim=125, fig_x=15,fig_y=5):
     
     def plot_psd(nperseg, nfft):
         for eeg in eeg_data:
@@ -55,7 +53,7 @@ def psd_plot_interactive(eeg_data, chan_name, nperseg_slider, nfft_slider, fs=25
             title = eeg.title
             line = eeg.stimulus_frequency
             
-            fig, ax = plt.subplots(figsize=(10, 5))
+            fig, ax = plt.subplots(figsize=(fig_x, fig_y))
             for i in range(len(eeg.filtered_signal)):
                 f, psd = signal.welch(eeg.filtered_signal[i], fs=fs, nperseg=nperseg*fs, noverlap=0, nfft=nfft*fs)
                 ax.plot(f, psd, label='{}'.format(chan_name[i]))
@@ -71,19 +69,15 @@ def psd_plot_interactive(eeg_data, chan_name, nperseg_slider, nfft_slider, fs=25
             plt.tight_layout()
             plt.show()
 
+    def update_nfft_range(*args):
+        nfft_slider.min = nperseg_slider.value
+
+    nperseg_slider = widgets.IntSlider(value=20, min=1, max=nperseg_max, step=1, description='nperseg*fs:')
+    nfft_slider = widgets.IntSlider(value=20, min=nperseg_slider.value, max=nfft_max, step=1, description='nfft*fs:')
+
+    nperseg_slider.observe(update_nfft_range, 'value')
+
     widgets.interact(plot_psd, nperseg=nperseg_slider, nfft=nfft_slider)
-
-
-def update_nfft_range(*args):
-    nfft_slider.min = nperseg_slider.value
-
-nperseg_slider = widgets.IntSlider(value=20, min=1, max=20, step=1, description='nperseg*fs:')
-nfft_slider = widgets.IntSlider(value=20, min=nperseg_slider.value, max=20, step=1, description='nfft*fs:')
-
-nperseg_slider.observe(update_nfft_range, 'value')
-
-psd_plot_interactive(eeg_data, chan_name, nperseg_slider, nfft_slider)
-
 
 def amplitude_plot(filt_signal, chan_name, title = '', fs=250, lim = 150,xlim=None):
     n_samples = filt_signal.shape[1]
