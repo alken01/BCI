@@ -26,11 +26,15 @@ class EEG_Data:
         self.filtered_signal = np.array(output)
 
 
-    def __init__(self, data: pd.core.frame.DataFrame = None, title: str = None, stimulus_frequency: float= None):
+    def __init__(self, data: pd.core.frame.DataFrame = None, title: str = None, stimulus_frequency: float= None, chan_name: list = None):
         self.data = data
         self.title = title
         self.stimulus_frequency = stimulus_frequency
+        self.chan_name = chan_name
         
+        self.n_chan = len(chan_name)
+        self.chan_list = ['ch' + str(i) for i in range(1, self.n_chan + 1)]
+
         self.raw_signal = self.data[chan_list].to_numpy().T
         self.filtered_signal = np.array(filt(self.raw_signal))
 
