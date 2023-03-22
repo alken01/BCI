@@ -10,6 +10,7 @@ class EEG_Data:
     data: pd.core.frame.DataFrame = None
     raw_signal: np.ndarray = None
     filtered_signal: np.ndarray = None
+    cleaned_signal: np.ndarray = None
     epoch_signal: np.ndarray = None
     title: str = None
     stimulus_frequency: float= None
@@ -48,7 +49,7 @@ def psd_plot(filt_signal, chan_name, title='', fs=250, x_min=1, x_lim=30, y_lim 
     t = np.arange(n_samples) / fs
 
     # Create a single plot with a single subplot
-    fig, ax = plt.subplots(figsize=(10, 3))
+    fig, ax = plt.subplots(figsize=(15, 3))
 
     # Loop through each signal and plot it on the same subplot
     for i in range(len(filt_signal)):
@@ -91,13 +92,22 @@ def amplitude_plot(filt_signal, chan_name, title = '', fs=250, lim = 150,xlim=No
     plt.tight_layout()
     plt.show()
 
-def cut_signal(filt_signal, start, end, fs=250):
+def cut_ends(filt_signal, start, end=None, fs=250):
     cut_start = int(start * fs)
     cut_end = int(end * fs)
     output = []
     
     for i in range(0,len(filt_signal)):
         output.append(filt_signal[i][cut_start:len(filt_signal[i])-cut_end])
+    return np.array(output)
+
+def cut_from_to(filt_signal, start, end, fs=250):
+    cut_start = int(start * fs)
+    cut_end = int(end * fs)
+    output = []
+    
+    for i in range(0,len(filt_signal)):
+        output.append(filt_signal[i][cut_start:cut_end])
     return np.array(output)
 
 
