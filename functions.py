@@ -44,16 +44,15 @@ def filt(sig,fs=250, lf=1, hf=30):
     return filt_sig
 
 
-def psd_plot_interactive(filt_signal, chan_name, title='', fs=250, x_min=1, x_lim=30, y_lim=125, line=None):
+
+def psd_plot_interactive(filt_signal, chan_name, nperseg_slider, nfft_slider, title='', fs=250, x_min=1, x_lim=30, y_lim=125, line=None):
     n_samples = filt_signal.shape[1]
 
     # Generate a time vector for the signal
     t = np.arange(n_samples) / fs
 
     # Create the slider widgets
-    nperseg_slider = widgets.IntSlider(value=20, min=1, max=20, step=1, description='nperseg*fs:')
-    nfft_slider = widgets.IntSlider(value=20, min=1, max=20, step=1, description='nfft*fs:')
-
+    
     # Create the plot function
     def plot_psd(nperseg, nfft):
         
