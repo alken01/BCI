@@ -3,17 +3,19 @@ from scipy import signal
 import numpy as np
 import matplotlib.pyplot as plt
 import mne
+import ipywidgets as widgets
 from dataclasses import dataclass
 
 @dataclass
 class EEG_Data:
     data: pd.core.frame.DataFrame = None
+    title: str = None
+    stimulus_frequency: float= None
+
     raw_signal: np.ndarray = None
     filtered_signal: np.ndarray = None
     cleaned_signal: np.ndarray = None
     epoch_signal: np.ndarray = None
-    title: str = None
-    stimulus_frequency: float= None
     cut_start:int = None
     cut_end:int = None
 
@@ -37,36 +39,42 @@ def custom_filter(exg, lf, hf, fs, type):
 
 # Signal filtering, bandpass 1-30Hz, bandstop 45-55Hz
 def filt(sig,fs=250, lf=1, hf=30):
-    filt_sig = custom_filter(sig, 45, 55, fs, 'bandstop') 
-    filt_sig = custom_filter(filt_sig, lf, hf, fs, 'bandpass')
+    # filt_sig = custom_filter(sig, 45, 55, fs, 'bandstop') 
+    filt_sig = custom_filter(sig, lf, hf, fs, 'bandpass')
     return filt_sig
 
 
-def psd_plot(filt_signal, chan_name, title='', fs=250, x_min=1, x_lim=30, y_lim = 125, line=None):
+def psd_plot_interactive(filt_signal, chan_name, title='', fs=250, x_min=1, x_lim=30, y_lim=125, line=None):
     n_samples = filt_signal.shape[1]
 
     # Generate a time vector for the signal
     t = np.arange(n_samples) / fs
 
-    # Create a single plot with a single subplot
-    fig, ax = plt.subplots(figsize=(15, 3))
+    # Create the slider widgets
+    nperseg_slider = widgets.IntSlider(value=20, min=1, max=20, step=1, description='nperseg*fs:')
+    nfft_slider = widgets.IntSlider(value=20, min=1, max=20, step=1, description='nfft*fs:')
 
-    # Loop through each signal and plot it on the same subplot
-    for i in range(len(filt_signal)):
-        f, psd = signal.welch(filt_signal[i], fs=fs, nperseg=20*fs, noverlap=0, nfft=20*fs)
-        ax.plot(f, psd, label='{}'.format(chan_name[i]))
+    # Create the plot function
+    def plot_psd(nperseg, nfft):
+        
+        fig, ax = plt.subplots(figsize=(10, 5))
+        for i in range(len(filt_signal)):
+            f, psd = signal.welch(filt_signal[i], fs=fs, nperseg=nperseg*fs, noverlap=0, nfft=nfft*fs)
+            ax.plot(f, psd, label='{}'.format(chan_name[i]))
+        if line:
+            ax.axvline(x=line, color='gray', linestyle='--')
+            ax.text(line+0.2, 20, 'f = '+str(line)+'Hz', fontsize=12, color='gray')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Amplitude')
+        ax.set_xlim(x_min, x_lim)
+        ax.set_ylim(0, y_lim)
+        ax.legend()
+        ax.set_title('PSD ' + title)
+        plt.tight_layout()
+        plt.show()
 
-    if line:
-        ax.axvline(x=line, color='gray', linestyle='--')
-        ax.text(line+0.2, 20, 'f = '+str(line)+'Hz', fontsize=12, color='gray')
-    ax.set_xlabel('Frequency (Hz)')
-    ax.set_ylabel('Amplitude')
-    ax.set_xlim(x_min, x_lim)
-    ax.set_ylim(0, y_lim)
-    ax.legend()
-    ax.set_title('PSD ' + title)
-    plt.tight_layout()
-    plt.show()
+    # Link the slider widgets to the plot function
+    widgets.interact(plot_psd, nperseg=nperseg_slider, nfft=nfft_slider);
 
 
 def amplitude_plot(filt_signal, chan_name, title = '', fs=250, lim = 150,xlim=None):
@@ -121,5 +129,5 @@ def reshape_to_epochs(data, epoch_length=3, sfreq=250):
         start = i * epoch_samples
         end = start + epoch_samples
         epoch_data[i] = data[:, start:end]
-    
+
     return epoch_data
