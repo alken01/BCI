@@ -6,18 +6,34 @@ import mne
 import ipywidgets as widgets
 from dataclasses import dataclass
 
-@dataclass
-class EEG_Data:
-    data: pd.core.frame.DataFrame = None
-    title: str = None
-    stimulus_frequency: float= None
 
+chan_list = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8']
+class EEG_Data:
     raw_signal: np.ndarray = None
     filtered_signal: np.ndarray = None
-    cleaned_signal: np.ndarray = None
     epoch_signal: np.ndarray = None
-    cut_start:int = None
-    cut_end:int = None
+
+    def cut_signal(self, start, end=None, cut_to=True, fs=250):
+        start = int(start * fs)
+        if end:
+            end = int(end * fs)
+        output = []
+        for i in range(0, len(self.filtered_signal)):
+            if cut_to:
+                output.append(self.filtered_signal[i][start:end])
+            else:
+                output.append(self.filtered_signal[i][start:len(self.filtered_signal[i]) - end])       
+        self.filtered_signal = np.array(output)
+
+
+    def __init__(self, data: pd.core.frame.DataFrame = None, title: str = None, stimulus_frequency: float= None):
+        self.data = data
+        self.title = title
+        self.stimulus_frequency = stimulus_frequency
+        
+        self.raw_signal = self.data[chan_list].to_numpy().T
+        self.filtered_signal = np.array(filt(self.raw_signal))
+
 
 # Source https://github.com/Mentalab-hub/explorepy/blob/master/examples/ssvep_demo/offline_analysis.py
 def custom_filter(exg, lf, hf, fs, type):
@@ -49,7 +65,6 @@ def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=25
     def plot_psd(nperseg, nfft):
         for eeg in eeg_data:
             n_samples = eeg.filtered_signal.shape[1]
-            t = np.arange(n_samples) / fs
             title = eeg.title
             line = eeg.stimulus_frequency
             
@@ -63,6 +78,7 @@ def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=25
             ax.set_xlabel('Frequency (Hz)')
             ax.set_ylabel('Amplitude')
             ax.set_xlim(x_min, x_lim)
+            ax.set_xticks(np.arange(x_min, x_lim, 1))
             ax.set_ylim(0, y_lim)
             ax.legend()
             ax.set_title('PSD ' + title)
@@ -102,23 +118,7 @@ def amplitude_plot(filt_signal, chan_name, title = '', fs=250, lim = 150,xlim=No
     plt.tight_layout()
     plt.show()
 
-def cut_ends(filt_signal, start, end=None, fs=250):
-    cut_start = int(start * fs)
-    cut_end = int(end * fs)
-    output = []
-    
-    for i in range(0,len(filt_signal)):
-        output.append(filt_signal[i][cut_start:len(filt_signal[i])-cut_end])
-    return np.array(output)
 
-def cut_from_to(filt_signal, start, end, fs=250):
-    cut_start = int(start * fs)
-    cut_end = int(end * fs)
-    output = []
-    
-    for i in range(0,len(filt_signal)):
-        output.append(filt_signal[i][cut_start:cut_end])
-    return np.array(output)
 
 
 def reshape_to_epochs(data, epoch_length=3, sfreq=250):
