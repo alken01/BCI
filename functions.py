@@ -26,8 +26,8 @@ class EEG_Data:
         self.filtered_signal = np.array(output)
 
 
-    def __init__(self, data: pd.core.frame.DataFrame = None, title: str = None, stimulus_frequency: float= None, chan_name: list = None):
-        self.data = data
+    def __init__(self, path: str, title: str = None, stimulus_frequency: float= None, chan_name: list = None):
+        self.data = pd.read_csv(path)
         self.title = title
         self.stimulus_frequency = stimulus_frequency
         self.chan_name = chan_name
