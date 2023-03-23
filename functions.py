@@ -2,9 +2,7 @@ import pandas as pd
 from scipy import signal
 import numpy as np
 import matplotlib.pyplot as plt
-import mne
 import ipywidgets as widgets
-from dataclasses import dataclass
 
 
 chan_list = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8']
@@ -64,8 +62,7 @@ def filt(sig,fs=250, lf=1, hf=30):
     return filt_sig
 
 
-def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=250, x_min=1, x_lim=30, y_lim=125, fig_x=15,fig_y=5):
-    
+def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=250, x_min=1, x_lim=30, y_lim=125, fig_x=15,fig_y=10):
     def plot_psd(nperseg, nfft):
         for eeg in eeg_data:
             n_samples = eeg.filtered_signal.shape[1]
@@ -77,8 +74,9 @@ def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=25
                 f, psd = signal.welch(eeg.filtered_signal[i], fs=fs, nperseg=nperseg*fs, noverlap=0, nfft=nfft*fs)
                 ax.plot(f, psd, label='{}'.format(chan_name[i]))
             if line:
-                ax.axvline(x=line, color='gray', linestyle='--')
-                ax.text(line+0.2, 20, 'f = '+str(line)+'Hz', fontsize=12, color='gray')
+                for l in line:
+                    ax.axvline(x=l, color='gray', linestyle='--')
+                    ax.text(l+0.2, 20, 'f = '+str(l)+'Hz', fontsize=12, color='gray')
             ax.set_xlabel('Frequency (Hz)')
             ax.set_ylabel('Amplitude')
             ax.set_xlim(x_min, x_lim)
@@ -123,8 +121,6 @@ def amplitude_plot(filt_signal, chan_name, title = '', fs=250, lim = 150,xlim=No
     plt.show()
 
 
-
-
 def reshape_to_epochs(data, epoch_length=3, sfreq=250):
     n_channels, n_samples = data.shape
     n_epochs = int(n_samples / (epoch_length * sfreq))
@@ -137,3 +133,4 @@ def reshape_to_epochs(data, epoch_length=3, sfreq=250):
         epoch_data[i] = data[:, start:end]
 
     return epoch_data
+
