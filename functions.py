@@ -56,8 +56,8 @@ def custom_filter(exg, lf, hf, fs, type):
     return signal.filtfilt(b, a, exg)
 
 # Signal filtering, bandpass 1-30Hz, bandstop 45-55Hz
-def filt(sig,fs=250, lf=1, hf=30):
-    # filt_sig = custom_filter(sig, 45, 55, fs, 'bandstop') 
+def filt(sig,fs=250, lf=5, hf=45):
+    filt_sig = custom_filter(sig, 45, 55, fs, 'bandstop') 
     filt_sig = custom_filter(sig, lf, hf, fs, 'bandpass')
     return filt_sig
 

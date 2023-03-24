@@ -2,3 +2,4 @@
 explorepy-master/
 __pycache__/
 offline_analysis.ipynb
+*.code-workspace
