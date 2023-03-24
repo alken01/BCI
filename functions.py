@@ -121,10 +121,10 @@ def amplitude_plot(filt_signal, chan_name, title = '', fs=250, lim = 150,xlim=No
     plt.show()
 
 
-def reshape_to_epochs(data, epoch_length=3, sfreq=250):
+def reshape_to_epochs(data, epoch_length=3, fs=250):
     n_channels, n_samples = data.shape
-    n_epochs = int(n_samples / (epoch_length * sfreq))
-    epoch_samples = epoch_length * sfreq
+    n_epochs = int(n_samples / (epoch_length * fs))
+    epoch_samples = epoch_length * fs
     epoch_data = np.zeros((n_epochs, n_channels, epoch_samples))
     
     for i in range(n_epochs):
