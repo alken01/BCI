@@ -34,6 +34,8 @@ class EEG_Data:
         self.chan_list = ['ch' + str(i) for i in range(1, self.n_chan + 1)]
 
         self.raw_signal = self.data[chan_list].to_numpy().T
+        self.hf = hf
+        self.lf = lf
         self.filtered_signal = np.array(filt(self.raw_signal, fs, lf, hf))
         self.epoch_signal = reshape_to_epochs(self.filtered_signal, epoch_length=epoch_length, fs=fs)
 
@@ -63,9 +65,13 @@ def filt(sig,fs, lf, hf):
     return filt_sig
 
 
-def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=250, x_min=1, x_lim=30, y_lim=125, fig_x=15,fig_y=10):
+def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=250, y_lim=None, fig_x=15,fig_y=10):
     def plot_psd(nperseg, nfft):
         for eeg in eeg_data:
+            
+            x_min = eeg.lf-2
+            x_lim = eeg.hf+2
+
             n_samples = eeg.filtered_signal.shape[1]
             title = eeg.title
             line = eeg.stimulus_frequency
@@ -77,12 +83,13 @@ def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=25
             if line:
                 for l in line:
                     ax.axvline(x=l, color='gray', linestyle='--')
-                    ax.text(l+0.2, 20, 'f = '+str(l)+'Hz', fontsize=12, color='gray')
+                    ax.text(l+0.2, 0, 'f = '+str(l)+'Hz', color='gray')
             ax.set_xlabel('Frequency (Hz)')
             ax.set_ylabel('Amplitude')
-            ax.set_xlim(x_min, x_lim)
+            ax.set_xlim(x_min,x_lim)
             ax.set_xticks(np.arange(x_min, x_lim, 1))
-            ax.set_ylim(0, y_lim)
+            if y_lim:
+                ax.set_ylim(0, y_lim)
             ax.legend()
             ax.set_title('PSD ' + title)
             plt.tight_layout()
