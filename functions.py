@@ -24,7 +24,7 @@ class EEG_Data:
         self.filtered_signal = np.array(output)
 
 
-    def __init__(self, path: str, title: str = None, stimulus_frequency: float= None, chan_name: list = None):
+    def __init__(self, path: str, title: str = None, stimulus_frequency: float= None, chan_name: list = None, epoch_length = 6, fs=250, lf=5, hf=45):
         self.data = pd.read_csv(path)
         self.title = title
         self.stimulus_frequency = stimulus_frequency
@@ -34,7 +34,8 @@ class EEG_Data:
         self.chan_list = ['ch' + str(i) for i in range(1, self.n_chan + 1)]
 
         self.raw_signal = self.data[chan_list].to_numpy().T
-        self.filtered_signal = np.array(filt(self.raw_signal))
+        self.filtered_signal = np.array(filt(self.raw_signal, fs, lf, hf))
+        self.epoch_signal = reshape_to_epochs(self.filtered_signal, epoch_length=epoch_length, fs=fs)
 
 
 # Source https://github.com/Mentalab-hub/explorepy/blob/master/examples/ssvep_demo/offline_analysis.py
@@ -56,7 +57,7 @@ def custom_filter(exg, lf, hf, fs, type):
     return signal.filtfilt(b, a, exg)
 
 # Signal filtering, bandpass 1-30Hz, bandstop 45-55Hz
-def filt(sig,fs=250, lf=5, hf=45):
+def filt(sig,fs, lf, hf):
     filt_sig = custom_filter(sig, 45, 55, fs, 'bandstop') 
     filt_sig = custom_filter(sig, lf, hf, fs, 'bandpass')
     return filt_sig
