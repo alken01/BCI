@@ -3,9 +3,20 @@ from scipy import signal
 import numpy as np
 import matplotlib.pyplot as plt
 import ipywidgets as widgets
+import os
 
+def process_folder(path_to_folder, chan_name, target_freq=None, extra_name=None, hf=45, lf=1):
+    if not extra_name:
+        extra_name = os.path.basename(path_to_folder)+': '
+    eeg_data = []    
+    for filename in os.listdir(path_to_folder):
+        if '_ExG.csv' in filename:
+            full_path = os.path.join(path_to_folder, filename)
+            eeg_data.append(EEG_Data(full_path,title = extra_name+filename[:filename.rindex('_')], chan_name=chan_name, stimulus_frequency=target_freq, hf=hf, lf=lf))
+    return eeg_data
 
 chan_list = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8']
+
 class EEG_Data:
     raw_signal: np.ndarray = None
     filtered_signal: np.ndarray = None
