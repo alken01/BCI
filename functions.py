@@ -76,12 +76,14 @@ def filt(sig,fs, lf, hf):
     return filt_sig
 
 
-def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=250, y_lim=None, fig_x=15,fig_y=10):
-    def plot_psd(nperseg, nfft):
+def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=250, ylim=None, xmin=None, xlim=None, fig_x=15, fig_y=10):
+    def plot_psd(nperseg, nfft, x_min, x_lim, y_lim):
         for eeg in eeg_data:
+            if x_min is None:
+                x_min = max(eeg.lf - 2, 1)
             
-            x_min = eeg.lf-2
-            x_lim = eeg.hf+2
+            if x_lim is None:
+                x_lim = eeg.hf + 2
 
             n_samples = eeg.filtered_signal.shape[1]
             title = eeg.title
@@ -97,7 +99,8 @@ def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=25
                     ax.text(l+0.2, 0, 'f = '+str(l)+'Hz', color='gray')
             ax.set_xlabel('Frequency (Hz)')
             ax.set_ylabel('Amplitude')
-            ax.set_xlim(x_min,x_lim)
+            
+            ax.set_xlim(x_min, x_lim)
             ax.set_xticks(np.arange(x_min, x_lim, 1))
             if y_lim:
                 ax.set_ylim(0, y_lim)
@@ -114,7 +117,7 @@ def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=25
 
     nperseg_slider.observe(update_nfft_range, 'value')
 
-    widgets.interact(plot_psd, nperseg=nperseg_slider, nfft=nfft_slider)
+    widgets.interact(plot_psd, nperseg=nperseg_slider, nfft=nfft_slider, x_min=xmin, x_lim=xlim, y_lim=ylim)
 
 def amplitude_plot(filt_signal, chan_name, title = '', fs=250, lim = 150,xlim=None):
     n_samples = filt_signal.shape[1]
