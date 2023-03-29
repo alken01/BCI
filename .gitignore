@@ -3,3 +3,4 @@ explorepy-master/
 __pycache__/
 offline_analysis.ipynb
 *.code-workspace
+.ipynb_checkpoints/clinical-checkpoint.ipynb

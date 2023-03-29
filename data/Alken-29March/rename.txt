@@ -1,16 +1,21 @@
-# name_map = {
-#     "01": "28MaSlow",
-#     "02": "28MaSlow-LessBlinking",
-#     "03": "RestingGray",
-#     "04": "RestingVROff",
-#     "05": "RestingClosedEyes",
-#     "06": "28MaFast",
-#     "07": "Explorepy-TL",
-#     "08": "Explorepy-TR",
-#     "09": "Explorepy-BL",
-#     "10": "Explorepy-BR",
-#     "11": "23Ma-BL",
-#     "12": "23Ma-ML",
-#     "13": "23Ma-TL",
-#     "14": "23Ma-TR"
-# }
+name_map = {
+    "01": "28MaSlow",
+    "02": "28MaSlow-LessBlinking",
+    "03": "RestingGray",
+    "04": "RestingVROff",
+    "05": "RestingClosedEyes",
+    "06": "28MaFast",
+    "07": "Explorepy-TL",
+    "08": "Explorepy-TR",
+    "09": "Explorepy-BL",
+    "10": "Explorepy-BR",
+    "11": "23Ma-BL",
+    "12": "23Ma-ML",
+    "13": "23Ma-TL",
+    "14": "23Ma-TR"
+}
+
+Bad Electrodes: Fp1, Fp2, P7
+
+06 - double frequency of the first exp, in the middle lost attention, rivalry turned into fusion. BR more prominent than in 01
+08 - started to see some influence from the bottom ssvep in the end, as well as the left one later
