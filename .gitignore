@@ -4,3 +4,4 @@ __pycache__/
 offline_analysis.ipynb
 *.code-workspace
 .ipynb_checkpoints/clinical-checkpoint.ipynb
+/SSVEP-Analysis-Toolbox
