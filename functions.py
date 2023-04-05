@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import ipywidgets as widgets
 import os
+import re
 
 def process_folder(path_to_folder, chan_name, target_freq=None, extra_name=None, hf=45, lf=1):
     if not extra_name:
@@ -12,7 +13,19 @@ def process_folder(path_to_folder, chan_name, target_freq=None, extra_name=None,
     for filename in os.listdir(path_to_folder):
         if '_ExG.csv' in filename:
             full_path = os.path.join(path_to_folder, filename)
-            eeg_data.append(EEG_Data(full_path,title = extra_name+filename[:filename.rindex('_')], chan_name=chan_name, stimulus_frequency=target_freq, hf=hf, lf=lf))
+            
+            if extra_name:
+                filename = extra_name+filename[:filename.rindex('_')]
+            else:
+                filename = filename[:filename.rindex('_')]
+            
+            target = target_freq
+            if target_freq == 'auto':
+                number_pattern = r'\d+(?:\.\d+)?'
+                filename_copy = filename.replace('_', '.')
+                target = [float(x) for x in re.findall(number_pattern, filename_copy)]
+
+            eeg_data.append(EEG_Data(full_path,title = filename, chan_name=chan_name, stimulus_frequency=target, hf=hf, lf=lf))
     return eeg_data
 
 chan_list = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8']
@@ -22,6 +35,27 @@ class EEG_Data:
     filtered_signal: np.ndarray = None
     epoch_signal: np.ndarray = None
     chan_name: list = None
+    chan_list: list = None
+    n_chan: int = None
+    title: str = None
+    stimulus_frequency: float = None
+    hf: float = None
+    lf: float = None
+
+    def __init__(self, path: str, title: str = None, stimulus_frequency: float= None, chan_name: list = None, epoch_length = 6, fs=250, lf=5, hf=45):
+        self.data = pd.read_csv(path)
+        self.title = title
+        self.stimulus_frequency = stimulus_frequency
+        self.chan_name = chan_name.copy()
+        
+        self.n_chan = len(chan_name)
+        self.chan_list = ['ch' + str(i) for i in range(1, self.n_chan + 1)]
+
+        self.raw_signal = self.data[chan_list].to_numpy().T
+        self.hf = hf
+        self.lf = lf
+        self.filtered_signal = np.array(filt(self.raw_signal, fs, lf, hf))
+        self.epoch_signal = reshape_to_epochs(self.filtered_signal, epoch_length=epoch_length, fs=fs)
 
     def cut_signal(self, start, end=None, cut_to=True, fs=250):
         start = int(start * fs)
@@ -56,20 +90,7 @@ class EEG_Data:
 
 
             
-    def __init__(self, path: str, title: str = None, stimulus_frequency: float= None, chan_name: list = None, epoch_length = 6, fs=250, lf=5, hf=45):
-        self.data = pd.read_csv(path)
-        self.title = title
-        self.stimulus_frequency = stimulus_frequency
-        self.chan_name = chan_name.copy()
-        
-        self.n_chan = len(chan_name)
-        self.chan_list = ['ch' + str(i) for i in range(1, self.n_chan + 1)]
-
-        self.raw_signal = self.data[chan_list].to_numpy().T
-        self.hf = hf
-        self.lf = lf
-        self.filtered_signal = np.array(filt(self.raw_signal, fs, lf, hf))
-        self.epoch_signal = reshape_to_epochs(self.filtered_signal, epoch_length=epoch_length, fs=fs)
+   
 
 
 # Source https://github.com/Mentalab-hub/explorepy/blob/master/examples/ssvep_demo/offline_analysis.py
@@ -97,7 +118,8 @@ def filt(sig,fs, lf, hf):
     return filt_sig
 
 
-def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=250, ylim=None, xmin=None, xlim=None, fig_x=15, fig_y=10):
+def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=250, ylim=-1, xmin=None, xlim=None, fig_x=15, fig_y=10):
+    
     def plot_psd(nperseg, nfft, x_min, x_lim, y_lim):
         for eeg in eeg_data:
             if x_min is None:
@@ -106,7 +128,6 @@ def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=25
             if x_lim is None:
                 x_lim = eeg.hf + 2
 
-            n_samples = eeg.filtered_signal.shape[1]
             title = eeg.title
             line = eeg.stimulus_frequency
             
@@ -117,13 +138,13 @@ def psd_plot_interactive(eeg_data, chan_name, nperseg_max=20, nfft_max=20, fs=25
             if line:
                 for l in line:
                     ax.axvline(x=l, color='gray', linestyle='--')
-                    ax.text(l+0.2, 0, 'f = '+str(l)+'Hz', color='gray')
+                    ax.text(l+0.2, 0, 'f = '+str(l)+'Hz', color='lightgray')
             ax.set_xlabel('Frequency (Hz)')
             ax.set_ylabel('Amplitude')
             
             ax.set_xlim(x_min, x_lim)
             ax.set_xticks(np.arange(x_min, x_lim, 1))
-            if y_lim:
+            if y_lim != -1:
                 ax.set_ylim(0, y_lim)
             ax.legend()
             ax.set_title('PSD ' + title)
