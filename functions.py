@@ -21,6 +21,7 @@ class EEG_Data:
     raw_signal: np.ndarray = None
     filtered_signal: np.ndarray = None
     epoch_signal: np.ndarray = None
+    chan_name: list = None
 
     def cut_signal(self, start, end=None, cut_to=True, fs=250):
         start = int(start * fs)
@@ -33,13 +34,33 @@ class EEG_Data:
             else:
                 output.append(self.filtered_signal[i][start:len(self.filtered_signal[i]) - end])       
         self.filtered_signal = np.array(output)
+        
 
 
+    def remove_channels(self, chan_name_list):
+        print('Original channel names:', self.chan_name)
+        for channel in chan_name_list:
+            # get index in chan_name where channel is
+            index = self.chan_name.index(channel)
+
+            # remove channel from chan_name
+            self.chan_name.pop(index)
+            self.chan_list.pop(index)
+            self.n_chan = len(self.chan_name)
+
+            # remove channel from filtered_signal, raw_signal, epoch_signal
+            self.filtered_signal = np.delete(self.filtered_signal, index, 0)
+            self.raw_signal = np.delete(self.raw_signal, index, 0)
+            self.epoch_signal = np.delete(self.epoch_signal, index, 0)
+        print('Updated channel names:', self.chan_name)
+
+
+            
     def __init__(self, path: str, title: str = None, stimulus_frequency: float= None, chan_name: list = None, epoch_length = 6, fs=250, lf=5, hf=45):
         self.data = pd.read_csv(path)
         self.title = title
         self.stimulus_frequency = stimulus_frequency
-        self.chan_name = chan_name
+        self.chan_name = chan_name.copy()
         
         self.n_chan = len(chan_name)
         self.chan_list = ['ch' + str(i) for i in range(1, self.n_chan + 1)]
