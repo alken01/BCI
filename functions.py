@@ -6,7 +6,7 @@ import ipywidgets as widgets
 import os
 import re
 
-def process_folder(path_to_folder, chan_name, target_freq=None, extra_name=None, hf=45, lf=1):
+def process_folder(path_to_folder, chan_name, target_freq=None, extra_name=None, hf=45, lf=1, epoch_length=6):
     if not extra_name:
         extra_name = os.path.basename(path_to_folder)+': '
     eeg_data = []    
@@ -25,7 +25,7 @@ def process_folder(path_to_folder, chan_name, target_freq=None, extra_name=None,
                 filename_copy = filename.replace('_', '.')
                 target = [float(x) for x in re.findall(number_pattern, filename_copy)]
 
-            eeg_data.append(EEG_Data(full_path,title = filename, chan_name=chan_name, stimulus_frequency=target, hf=hf, lf=lf))
+            eeg_data.append(EEG_Data(full_path,title = filename, chan_name=chan_name, stimulus_frequency=target, hf=hf, lf=lf, epoch_length=epoch_length))
     return eeg_data
 
 chan_list = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8']
