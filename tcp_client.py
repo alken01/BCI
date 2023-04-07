@@ -5,15 +5,16 @@ def main():
     server_port = 42069
     
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
-        server.connect((server_ip, server_port))
         
+        server.connect((server_ip, server_port))
+        print('Connected to', server_ip, server_port)
         message = "meta"
         server.sendall(message.encode('utf-8'))
 
         data = server.recv(1024).decode('utf-8')
         print('Server response:', data)
         
-        if data != "y":
+        if data != "meta":
             return
         print('Connected to', server_ip, server_port)
         

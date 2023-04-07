@@ -12,6 +12,7 @@ public class TcpClientScript : MonoBehaviour
 
     public string serverIp = "192.168.0.100";
     public int serverPort = 42069;
+    
 
     private void Start()
     {
