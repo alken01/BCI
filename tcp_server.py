@@ -3,24 +3,63 @@ import socket
 import threading
 import csv
 import time
+import sys
 
-CSV_PATH = "csvlog/"
-CSV_NAME = "data"
+CSV_PATH = 'logdata/'
+CSV_NAME = 'Experiment'
 SERVER_IP = '192.168.0.100'
+START_MSG = 'meta'
+END_MSG = 'end'
+
 SERVER_PORT = 42069
 
-START_MSG = "meta"
-END_MSG = "end"
+def main():
+    # # if passed the ip in an argument
+    # help = "Usage: python tcp_server.py [server_ip] [csv_name]"
+    # if len(sys.argv) > 1:
+    #     if sys.argv[1] == "-h":
+    #         print(help)
+    #         return
+    #     SERVER_IP = "192.168.0." + sys.argv[1]
+    # if len(sys.argv) > 2:
+    #     CSV_NAME = sys.argv[2]
+    # else:
+    #     print("Invalid number of arguments.\n", help)
+    #     return
 
+    # create the csv file if it doesnt exist
+    create_csv_file()
+
+    # create the server 
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((SERVER_IP, SERVER_PORT))
+    server.listen(5)
+
+    print(f"Listening on {SERVER_IP}:{SERVER_PORT}")
+
+    try:
+        # listen for connections
+        while True:
+            client_socket, client_address = server.accept()
+            client_handler = threading.Thread(target=handle_client, args=(client_socket, client_address))
+            client_handler.start()
+    except KeyboardInterrupt:
+        print("\nStopping server...")
+    
+    server.close()
+    
 def handle_client(client_socket, client_address):
     print(f"Connection from {client_address}")
 
     # check for start message from the client
-    if client_socket.recv(1024).decode('utf-8') != START_MSG:
+    received_message = client_socket.recv(1024).decode('utf-8');
+    if received_message != START_MSG:
         client_socket.close()
-        print("Wrong start message")
+        print("Wrong start message:",received_message)
         return
     
+    print("Right start message:",received_message)
+
     # let the client know that the server is ready
     input_message = input("Allow client to start: y\n")
     if input_message != 'y':
@@ -38,9 +77,8 @@ def handle_client(client_socket, client_address):
         log_writer.writerow([time.time(),'start'])
         
         while True:
-            data = client_socket.recv(1024)
-            unixtime = int(time.time())
-            message = data.decode('utf-8')
+            unixtime = time.time()
+            message = client_socket.recv(1024).decode('utf-8')
 
             # log the data
             log_entry = [unixtime, message]
@@ -66,29 +104,6 @@ def create_csv_file():
             log_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             log_writer.writerow(["TimeStamp", "Code"])
             print(f"Created file: {csv_name}")
-
-
-def main():
-    # create if it doesnt exist
-    create_csv_file()
-
-    # create the server 
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((SERVER_IP, SERVER_PORT))
-    server.listen(5)
-
-    print(f"Listening on {SERVER_IP}:{SERVER_PORT}")
-
-    try:
-        # listen for connections
-        while True:
-            client_socket, client_address = server.accept()
-            client_handler = threading.Thread(target=handle_client, args=(client_socket, client_address))
-            client_handler.start()
-    except KeyboardInterrupt:
-        print("\nStopping server...")
-    
-    server.close()
 
 if __name__ == '__main__':
     main()
