@@ -7,7 +7,7 @@ import sys
 
 CSV_PATH = 'logdata/'
 CSV_NAME = 'Experiment2'
-SERVER_IP = '192.168.0.100'
+SERVER_IP = '192.168.0.101'
 START_MSG = 'meta'
 END_MSG = 'end'
 
