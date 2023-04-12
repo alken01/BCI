@@ -7,26 +7,13 @@ import sys
 
 CSV_PATH = 'logdata/'
 CSV_NAME = 'Experiment2'
-SERVER_IP = '192.168.0.101'
+SERVER_IP = '192.168.0.103'
 START_MSG = 'meta'
 END_MSG = 'end'
 
 SERVER_PORT = 42069
 
 def main():
-    # # if passed the ip in an argument
-    # help = "Usage: python tcp_server.py [server_ip] [csv_name]"
-    # if len(sys.argv) > 1:
-    #     if sys.argv[1] == "-h":
-    #         print(help)
-    #         return
-    #     SERVER_IP = "192.168.0." + sys.argv[1]
-    # if len(sys.argv) > 2:
-    #     CSV_NAME = sys.argv[2]
-    # else:
-    #     print("Invalid number of arguments.\n", help)
-    #     return
-
     # create the csv file if it doesnt exist
     create_csv_file()
 
