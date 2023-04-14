@@ -1,13 +1,12 @@
 import os
 import socket
-import threading
 import csv
 import time
-import sys
+
 
 CSV_PATH = 'logdata/'
 CSV_NAME = 'Experiment2'
-SERVER_IP = '192.168.0.103'
+SERVER_IP = '192.168.0.100'
 START_MSG = 'meta'
 END_MSG = 'end'
 
@@ -16,7 +15,6 @@ SERVER_PORT = 42069
 def main():
     # create the csv file if it doesnt exist
     create_csv_file()
-
     # create the server 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((SERVER_IP, SERVER_PORT))
@@ -24,14 +22,14 @@ def main():
 
     print(f"Listening on {SERVER_IP}:{SERVER_PORT}")
 
-    try:
-        # listen for connections
-        while True:
+    while True:
+        try:
+            # listen for connections
             client_socket, client_address = server.accept()
-            client_handler = threading.Thread(target=handle_client, args=(client_socket, client_address))
-            client_handler.start()
-    except KeyboardInterrupt:
-        print("\nStopping server...")
+            handle_client(client_socket, client_address)
+        except KeyboardInterrupt:
+            print("\nStopping server...")
+            break
     
     server.close()
     
@@ -69,7 +67,7 @@ def handle_client(client_socket, client_address):
 
             # log the data
             log_entry = [unixtime, message]
-            log_writer.writerow(log_entry)
+            log_writer.writerow([message])
             print("Logged:",log_entry)
 
             # keep receive messages until it sends an end message
@@ -82,6 +80,7 @@ def handle_client(client_socket, client_address):
 def create_csv_file():
     # create dir
     csv_name = os.path.join(CSV_PATH, f"{CSV_NAME}_Marker.csv")
+
     if not os.path.exists(CSV_PATH):
         os.makedirs(CSV_PATH)
 
