@@ -4,9 +4,9 @@ import csv
 import time
 
 
-CSV_PATH = 'logdata/'
-CSV_NAME = 'Experiment2'
-SERVER_IP = '192.168.0.100'
+CSV_PATH = 'log/'
+CSV_NAME = 'log_experiment'
+SERVER_IP = '192.168.0.102'
 START_MSG = 'meta'
 END_MSG = 'end'
 
@@ -30,15 +30,22 @@ def main():
         except KeyboardInterrupt:
             print("\nStopping server...")
             break
-    
     server.close()
+    # from the csv remove all "'"
+    with open(os.path.join(CSV_PATH, f"{CSV_NAME}_Marker.csv"), 'r') as f:
+        lines = f.readlines()
+    with open(os.path.join(CSV_PATH, f"{CSV_NAME}_Marker.csv"), 'w') as f:
+        for line in lines:
+            f.write(line.replace('"', ''))
+    
     
 def handle_client(client_socket, client_address):
     print(f"Connection from {client_address}")
 
     # check for start message from the client
     received_message = client_socket.recv(1024).decode('utf-8');
-    if received_message != START_MSG:
+    # if the message contains the start message, continue
+    if START_MSG not in received_message:
         client_socket.close()
         print("Wrong start message:",received_message)
         return
@@ -70,8 +77,9 @@ def handle_client(client_socket, client_address):
             log_writer.writerow([message])
             print("Logged:",log_entry)
 
-            # keep receive messages until it sends an end message
-            if message == END_MSG: break
+            # if the message without new spaces is the end message, break
+            if message.replace(" ", "") == END_MSG:
+                break
 
     print(f"Closing connection {client_address}")
     client_socket.close()
@@ -83,13 +91,19 @@ def create_csv_file():
 
     if not os.path.exists(CSV_PATH):
         os.makedirs(CSV_PATH)
-
+    
     # create file
     if not os.path.isfile(csv_name):
         with open(csv_name, 'w', newline='') as csvfile:
             log_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             log_writer.writerow(["TimeStamp", "Code"])
-            print(f"Created file: {csv_name}")
+            print(f"Created file: {csv_name}\n")
+    # if it exists, overwrite
+    else:
+        with open(csv_name, 'w', newline='') as csvfile:
+            log_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            log_writer.writerow(["TimeStamp", "Code"])
+            print(f"Overwrote file: {csv_name}\n")
 
 if __name__ == '__main__':
     main()
