@@ -1,0 +1,47 @@
+TimeStamp,Code
+1681662654.231504,start
+Connected to server.
+ExperimentManager started.
+Number of experiments: 3
+Starting experiment 0.
+NextExperiment called. Showing experiment 0.
+
+start 
+
+pause 0 0
+
+resume 0 0
+
+pause 0 1
+
+resume 0 1
+
+pause 0 2
+
+resume 0 2
+
+pause 0 3
+
+resume 0 3
+
+pause 0 4
+
+resume 0 4
+
+pause 0 5
+
+resume 0 5
+
+Experiment 0 ended.
+
+NextExperiment called. Showing experiment 1.
+
+start 
+
+pause 1 0
+
+resume 1 0
+
+pause 1 1
+
+end
