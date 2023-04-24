@@ -2,6 +2,8 @@ import os
 import socket
 import csv
 import time
+import explorepy
+import argparse
 
 
 CSV_PATH = 'log/'
@@ -13,6 +15,11 @@ END_MSG = 'end'
 SERVER_PORT = 42069
 
 def main():
+    
+    parser = argparse.ArgumentParser(description="Example code for marker generation")
+    parser.add_argument("-n", "--name", dest="name", type=str, help="Name of the device.")
+    args = parser.parse_args()
+
     # create the csv file if it doesnt exist
     create_csv_file()
     # create the server 
@@ -26,10 +33,11 @@ def main():
         try:
             # listen for connections
             client_socket, client_address = server.accept()
-            handle_client(client_socket, client_address)
+            handle_client(client_socket, client_address,args)
         except KeyboardInterrupt:
             print("\nStopping server...")
             break
+    
     server.close()
     # from the csv remove all "'"
     with open(os.path.join(CSV_PATH, f"{CSV_NAME}_Marker.csv"), 'r') as f:
@@ -39,7 +47,7 @@ def main():
             f.write(line.replace('"', ''))
     
     
-def handle_client(client_socket, client_address):
+def handle_client(client_socket, client_address,args):
     print(f"Connection from {client_address}")
 
     # check for start message from the client
@@ -51,7 +59,10 @@ def handle_client(client_socket, client_address):
         return
     
     print("Right start message:",received_message)
-
+     # Create an Explore object
+    explore = explorepy.Explore()
+    explore.connect(device_name=args.name)
+    explore.record_data(file_name='test_event_gen', file_type='csv', do_overwrite=True, block=False)
     # let the client know that the server is ready
     input_message = input("Allow client to start: y\n")
     if input_message != 'y':
@@ -71,7 +82,8 @@ def handle_client(client_socket, client_address):
         while True:
             unixtime = time.time()
             message = client_socket.recv(1024).decode('utf-8')
-
+            print(message)
+            explore.set_marker(code=101)
             # log the data
             log_entry = [unixtime, message]
             log_writer.writerow([message])
@@ -80,7 +92,7 @@ def handle_client(client_socket, client_address):
             # if the message without new spaces is the end message, break
             if message.replace(" ", "") == END_MSG:
                 break
-
+    explore.stop_recording()
     print(f"Closing connection {client_address}")
     client_socket.close()
 
