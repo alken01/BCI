@@ -2,6 +2,7 @@ import os
 import socket
 import csv
 import time
+from xml.sax import parseString
 import explorepy
 import argparse
 
@@ -13,6 +14,26 @@ START_MSG = 'meta'
 END_MSG = 'end'
 
 SERVER_PORT = 42069
+
+
+
+def parse_message (message):
+    message_dict = {
+        "start": 0,
+        "resume": 1,
+        "pause": 2
+    }
+    parts = message.split('_')
+    if len(parts) == 2 and parts[0] in message_dict:
+        try:
+            num = int(parts[1])
+            try: 
+                return int(str(message_dict[parts[0]]) + parts[1])
+            except: 
+                return None
+        except:
+            return None
+    return None
 
 def main():
     
@@ -82,8 +103,8 @@ def handle_client(client_socket, client_address,args):
         while True:
             unixtime = time.time()
             message = client_socket.recv(1024).decode('utf-8')
-            print(message)
-            explore.set_marker(code=101)
+            marker = parse_message(message)
+            explore.set_marker(code=marker)
             # log the data
             log_entry = [unixtime, message]
             log_writer.writerow([message])
