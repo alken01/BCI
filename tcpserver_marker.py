@@ -91,14 +91,7 @@ def handle_client(client_socket, client_address, m, win):
         print("Logged:",message)
 
         # keep receive messages until it sends an end message
-        i = 69
-        if 'resume' in message:
-            i = 1
-        if 'pause' in message:
-            i = 10
-        if 'ment' in message:
-            i = 11
-        
+
         
         m.send(i)
         win.flip()
@@ -127,6 +120,24 @@ def create_csv_file():
             log_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             log_writer.writerow(["TimeStamp", "Code"])
             print(f"Created file: {csv_name}")  
+
+
+message_dict = {
+    "start": 0,
+    "resume": 1,
+    "pause": 2,        
+}
+
+def parse_message(message):
+    parts = message.split('_')
+    if len(parts) == 2 and parts[0] in message_dict:
+        try:
+            num = int(parts[1])
+            return int(message_dict[parts[0]] + str(num))
+        except ValueError:
+            pass
+    return None
+
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,190 @@
+﻿DATA_PARAMETERS START
+   DataFormat           = FLOAT
+   DataGuid             = {0B86B22B-1A49-411A-9657-4A4BDA3D3ED8}
+   DataExtension        = dat
+   CurrentSessionLabel  = 
+   DataByteOrder        = INTEL
+   DataSampOrder        = SAMP
+   AmplifierInfo        = Synamps Headbox 1: Digital(PN:8509 SN:1563) Analog(PN:8548 SN:0817) Firm:01 (SynAmps), LP-Filter: order 2 Butterworth (Configuration: liuyin_vr_ssvep)
+   Comments             = 
+   NumSessions          =  0
+   CurrentSession       =  0
+   FrequencyDomain      =  0
+   NumSamples           =  139800
+   NumTrials            =  1
+   NumChannels          =  65
+   NumGroups            =  2
+   NumMagGroups         =  0
+   NumElGroups          =  1
+   IntOffset            =  0
+   NumLinesSkip         =  0
+   NumColumnsSkip       =  0
+   DecimalSymbol        =  0
+   DigLengthUnit        = -1
+   DigColX              =  1
+   DigColY              =  2
+   DigColZ              =  3
+   DigColLabel          =  4
+   DigDirX              = -1
+   DigDirY              = -1
+   DigDirZ              = -1
+   StartYear            =  2023
+   StartMonth           =  3
+   StartDay             =  29
+   StartHour            =  11
+   StartMin             =  51
+   StartSec             =  20
+   StartMillisec        =  843
+   SampleTimeUsec       =  500
+   SampleFreqHz         =  2000
+   TriggerOffsetUsec    =  0
+   TriggerOffsetHz      =  0
+   StimIntervalUsec     =  0
+DATA_PARAMETERS END
+
+DEVICE_PARAMETERS START
+   DataUnit             = uV
+   NumChanThisGroup     =  62
+   NumSensorsThisGroup  =  62
+   CommonOffset         =  0
+   NumRefChannels       =  0
+   CommonScale          =  1
+DEVICE_PARAMETERS END
+
+DEVICE_PARAMETERS_OTHERS START
+   DataUnit             = uV
+   NumChanThisGroup     =  3
+   NumSensorsThisGroup  =  3
+   CommonOffset         =  0
+   NumRefChannels       =  0
+   CommonScale          =  1
+DEVICE_PARAMETERS_OTHERS END
+
+CHAN_IN_FILE START
+   ListDescription      = Orig2Meas
+   ListUnits            = 
+   ListNrColumns        =  1
+   ListNrRows           =  62
+   ListNrTimepts        =  1
+   ListNrBlocks         =  1
+   ListBinary           =  0
+   ListType             =  0
+   ListTrafoType        =  0
+   ListGridType         =  2
+   ListFirstColumn      =  1
+   ListIndexMin         = -1
+   ListIndexMax         = -1
+   ListIndexAbsMax      = -1
+CHAN_IN_FILE END
+
+CHAN_IN_FILE START_LIST	# Do not edit!
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+  10
+  11
+  12
+  13
+  14
+  15
+  16
+  17
+  18
+  19
+  20
+  21
+  22
+  23
+  24
+  25
+  26
+  27
+  28
+  29
+  30
+  31
+  32
+  33
+  34
+  35
+  36
+  37
+  38
+  39
+  40
+  41
+  42
+  43
+  44
+  45
+  46
+  47
+  48
+  49
+  50
+  51
+  52
+  53
+  54
+  55
+  56
+  57
+  58
+  59
+  60
+  61
+  62
+CHAN_IN_FILE END_LIST
+
+CHAN_IN_FILE_OTHERS START
+   ListDescription      = Orig2Meas
+   ListUnits            = 
+   ListNrColumns        =  1
+   ListNrRows           =  3
+   ListNrTimepts        =  1
+   ListNrBlocks         =  1
+   ListBinary           =  0
+   ListType             =  0
+   ListTrafoType        =  0
+   ListGridType         =  2
+   ListFirstColumn      =  1
+   ListIndexMin         = -1
+   ListIndexMax         = -1
+   ListIndexAbsMax      = -1
+CHAN_IN_FILE_OTHERS END
+
+CHAN_IN_FILE_OTHERS START_LIST	# Do not edit!
+  63
+  64
+  65
+CHAN_IN_FILE_OTHERS END_LIST
+
+TRIGGER_FLAGS_OTHERS START
+   ListDescription      = Trigger
+   ListUnits            = 
+   ListNrColumns        =  1
+   ListNrRows           =  3
+   ListNrTimepts        =  1
+   ListNrBlocks         =  1
+   ListBinary           =  0
+   ListType             =  0
+   ListTrafoType        =  0
+   ListGridType         =  2
+   ListFirstColumn      =  1
+   ListIndexMin         = -1
+   ListIndexMax         = -1
+   ListIndexAbsMax      = -1
+TRIGGER_FLAGS_OTHERS END
+
+TRIGGER_FLAGS_OTHERS START_LIST	# Do not edit!
+  0
+  0
+  0
+TRIGGER_FLAGS_OTHERS END_LIST
+
