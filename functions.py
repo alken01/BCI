@@ -5,19 +5,20 @@ import matplotlib.pyplot as plt
 import ipywidgets as widgets
 import os
 import re
+import csv
 
-def process_folder(path_to_folder, chan_name, target_freq=None, extra_name=None, hf=45, lf=1, epoch_length=6):
-    if not extra_name:
+def process_folder(path_to_folder, chan_name, target_freq=None, extra_name=None, hf=45, lf=1, epoch_length=6, filter=True):
+    if extra_name == 'path':
         extra_name = os.path.basename(path_to_folder)+': '
     eeg_data = []    
     for filename in os.listdir(path_to_folder):
         if '_ExG.csv' in filename:
             full_path = os.path.join(path_to_folder, filename)
             
+            filename = filename[:filename.rindex('_')]
+            
             if extra_name:
-                filename = extra_name+filename[:filename.rindex('_')]
-            else:
-                filename = filename[:filename.rindex('_')]
+                filename = extra_name+filename
             
             target = target_freq
             if target_freq == 'auto':
@@ -25,10 +26,10 @@ def process_folder(path_to_folder, chan_name, target_freq=None, extra_name=None,
                 filename_copy = filename.replace('_', '.')
                 target = [float(x) for x in re.findall(number_pattern, filename_copy)]
 
-            eeg_data.append(EEG_Data(full_path,title = filename, chan_name=chan_name, stimulus_frequency=target, hf=hf, lf=lf, epoch_length=epoch_length))
+            eeg_data.append(EEG_Data(full_path,title = filename, chan_name=chan_name, stimulus_frequency=target, hf=hf, lf=lf, epoch_length=epoch_length, filter=filter))
     return eeg_data
 
-chan_list = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8']
+# chan_list = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6']
 
 class EEG_Data:
     raw_signal: np.ndarray = None
@@ -41,21 +42,53 @@ class EEG_Data:
     stimulus_frequency: float = None
     hf: float = None
     lf: float = None
+    timestamp: np.ndarray = None
 
-    def __init__(self, path: str, title: str = None, stimulus_frequency: float= None, chan_name: list = None, epoch_length = 6, fs=250, lf=5, hf=45):
-        self.data = pd.read_csv(path)
+    def __init__(self, path: str = None, title: str = None, stimulus_frequency: float = None, chan_name: list = None, epoch_length=6, fs=250, lf=1, hf=45, filter=True):
         self.title = title
         self.stimulus_frequency = stimulus_frequency
-        self.chan_name = chan_name.copy()
-        
-        self.n_chan = len(chan_name)
+        self.chan_name = chan_name.copy() 
+        self.n_chan = len(chan_name) 
         self.chan_list = ['ch' + str(i) for i in range(1, self.n_chan + 1)]
 
-        self.raw_signal = self.data[chan_list].to_numpy().T
-        self.hf = hf
-        self.lf = lf
-        self.filtered_signal = np.array(filt(self.raw_signal, fs, lf, hf))
-        self.epoch_signal = reshape_to_epochs(self.filtered_signal, epoch_length=epoch_length, fs=fs)
+        if path is not None:
+            self.data = pd.read_csv(path)
+            self.timestamp = self.data['TimeStamp'].to_numpy()
+            try: 
+                self.raw_signal = self.data[self.chan_name].to_numpy().T
+            except:
+                self.raw_signal = self.data[self.chan_list].to_numpy().T
+            self.hf = hf
+            self.lf = lf
+            if filter:
+                self.filtered_signal = np.array(filt(self.raw_signal, fs, lf, hf))
+            else:
+                self.filtered_signal = self.raw_signal.copy()
+            self.epoch_signal = reshape_to_epochs(self.filtered_signal, epoch_length=epoch_length, fs=fs)
+
+
+    def get_epoched_signal(self, epoch_length=6, fs=250):
+        return reshape_to_epochs(self.filtered_signal, epoch_length=epoch_length, fs=fs)
+    
+    def add_signal(self, eeg, stack=False):
+        if eeg is None:
+            return
+        if isinstance(eeg, EEG_Data):
+            eeg = eeg.filtered_signal
+        if self.filtered_signal is None:
+            self.filtered_signal = eeg
+        else:
+            # keep the minimum length of the two signals
+            min_length = min(self.filtered_signal.shape[1], eeg.shape[1])
+            # cut the signals to the minimum length
+            self.filtered_signal = self.filtered_signal[:, :min_length]
+            eeg = eeg[:, :min_length]
+            # add the signals
+            if stack:
+                self.filtered_signal = self.filtered_signal + eeg
+            else:
+                self.filtered_signal = np.vstack((self.filtered_signal, eeg))
+
 
     def cut_signal(self, start, end=None, cut_to=True, fs=250):
         start = int(start * fs)
@@ -88,15 +121,12 @@ class EEG_Data:
             self.epoch_signal = np.delete(self.epoch_signal, index, 0)
         print('Updated channel names:', self.chan_name)
 
-
-            
    
 
 
 # Source https://github.com/Mentalab-hub/explorepy/blob/master/examples/ssvep_demo/offline_analysis.py
 def custom_filter(exg, lf, hf, fs, type):
     """
-    
     Args:
         exg: EEG signal with the shape: (N_chan, N_sample)
         lf: Low cutoff frequency
@@ -113,8 +143,8 @@ def custom_filter(exg, lf, hf, fs, type):
 
 # Signal filtering, bandpass 1-30Hz, bandstop 45-55Hz
 def filt(sig,fs, lf, hf):
-    filt_sig = custom_filter(sig, 45, 55, fs, 'bandstop') 
-    filt_sig = custom_filter(sig, lf, hf, fs, 'bandpass')
+    filt_sig = custom_filter(sig, 45, 55, fs, 'bandstop')
+    filt_sig = custom_filter(filt_sig, lf, hf, fs, 'bandpass')
     return filt_sig
 
 
@@ -230,3 +260,140 @@ def reshape_to_epochs(data, epoch_length=3, fs=250):
 
     return epoch_data
 
+def chan_hemisphere(chan_name):
+    # left hemisphere -> odd numbers (1,3,5,7) 
+    left_hemisphere = [chan for chan in chan_name if chan[-1].isdigit() and int(chan[-1]) % 2 != 0]
+    # right hemisphere -> even numbers (2,4,6,8)
+    right_hemisphere = [chan for chan in chan_name if chan[-1].isdigit() and int(chan[-1]) % 2 == 0]
+    # midline -> z
+    midline_hemisphere = [chan for chan in chan_name if chan[-1] == 'z']
+    return left_hemisphere, midline_hemisphere, right_hemisphere
+
+def hemisphere_signal_avg(eeg, chan_name):
+    left_hemisphere, midline_hemisphere, right_hemisphere = chan_hemisphere(chan_name)
+
+    # seperate the signal into left and right hemisphere and take the average per channel
+    left_hemisphere_signal = np.mean(eeg.filtered_signal[[chan_name.index(chan) for chan in left_hemisphere],:], axis=0)
+    right_hemisphere_signal = np.mean(eeg.filtered_signal[[chan_name.index(chan) for chan in right_hemisphere],:], axis=0)
+    midline_hemisphere_signal = np.mean(eeg.filtered_signal[[chan_name.index(chan) for chan in midline_hemisphere],:], axis=0)
+    
+    return left_hemisphere_signal, midline_hemisphere_signal, right_hemisphere_signal
+
+def plot_spectrogram_and_bands(eeg,title=None, band_freqs=None, f_min=5, f_max=15, fs=250, nfft=3, nperseg=3):
+    if band_freqs:
+        f_min = min(band_freqs) - 2
+        f_max = max(band_freqs) + 2
+    else:
+        band_freqs = [f_min, f_max]
+    total_signal = np.mean(eeg.filtered_signal, axis=0)
+    left_hemisphere_signal, midline_hemisphere_signal, right_hemisphere_signal = hemisphere_signal_avg(eeg, chan_name)
+
+    def masked_spectogram(singal, nperseg=3,nfft=3):
+        frequencies, times, spectrogram = signal.spectrogram(singal, fs=fs, nperseg=fs*nperseg, noverlap=fs*nperseg/2, scaling='spectrum', mode='psd', nfft=fs*nfft)
+        mask = (frequencies >= f_min) & (frequencies <= f_max)
+        spectrogram_masked = spectrogram[mask, :]
+        frequencies_masked = frequencies[mask]
+        return frequencies_masked, times, spectrogram_masked
+    
+    # Plot the spectrogram using matplotlib
+    
+    # fig, axs = plt.subplots(nrows=2, ncols=3,figsize=(15, 6))
+    fig, axs = plt.subplots(nrows=2, ncols=3,figsize=(15, 6))
+    def plot_sepctro(ax, signal, title):
+        frequencies_masked, times, spectrogram_masked = masked_spectogram(signal, nperseg=nperseg,nfft=nfft)
+        ax.pcolormesh(times, frequencies_masked, spectrogram_masked)
+        ax.set_ylim(f_min, f_max)
+        ax.set_ylabel('Frequency [Hz]')
+        ax.set_xlabel('Time [sec]')
+        ax.set_title(title)
+    
+    # plot spectro per each channel in a 2 by 4
+    # for i, chan in enumerate(chan_name):
+    #     if i < 4:
+    #         plot_sepctro(axs[0,i], eeg.filtered_signal[i,:], chan)
+    #     else:
+    #         plot_sepctro(axs[1,i-4], eeg.filtered_signal[i,:], chan)
+
+
+    plot_sepctro(axs[0,0], left_hemisphere_signal, 'Left Hemisphere Signal')
+    plot_sepctro(axs[0,1], midline_hemisphere_signal, 'Midline Signal')
+    plot_sepctro(axs[0,2], right_hemisphere_signal, 'Right Hemisphere Signal')
+
+    def plot_bands(ax, signal, title):
+        frequencies_masked, times, spectrogram_masked = masked_spectogram(signal)
+        # Plot the PSDs in the frequency bands of interest through time
+        for i, band_freq in enumerate(band_freqs):
+            band_mask = (frequencies_masked >= band_freq-1) & (frequencies_masked <= band_freq+1)
+            psd = np.mean(spectrogram_masked[band_mask, :], axis=0)
+            ax.plot(times, psd, label=f'{band_freqs[i]} Hz band')
+        ax.set_xlim(times[0], times[-1])
+        ax.set_xlabel('Time [sec]')
+        ax.set_ylabel('PSD')
+        ax.legend()
+        ax.set_title(title)
+
+    if band_freqs:
+        plot_bands(axs[1,0], left_hemisphere_signal, 'Left Hemisphere Signal')
+        plot_bands(axs[1,1], left_hemisphere_signal-right_hemisphere_signal, 'Delta Left vs Right')
+        plot_bands(axs[1,2], right_hemisphere_signal, 'Right Hemisphere Signal')
+    
+    if title:
+        fig.suptitle(title)
+    plt.tight_layout()
+    plt.show()
+
+
+def hemisphere_signal_avg(eeg, chan_name):
+    left_hemisphere, midline_hemisphere, right_hemisphere = chan_hemisphere(chan_name)
+
+    # seperate the signal into left and right hemisphere and take the average per channel
+    left_hemisphere_signal = np.mean(eeg.filtered_signal[[chan_name.index(chan) for chan in left_hemisphere],:], axis=0)
+    right_hemisphere_signal = np.mean(eeg.filtered_signal[[chan_name.index(chan) for chan in right_hemisphere],:], axis=0)
+    midline_hemisphere_signal = np.mean(eeg.filtered_signal[[chan_name.index(chan) for chan in midline_hemisphere],:], axis=0)
+    
+    return left_hemisphere_signal, midline_hemisphere_signal, right_hemisphere_signal
+
+def plot_spectrogram_and_bands(eeg, chan_name, title=None, band_freqs=None, f_min=5, f_max=15, fs=250, nfft=3, nperseg=3):
+    if band_freqs:
+        f_min = min(band_freqs) - 2
+        f_max = max(band_freqs) + 2
+    else:
+        band_freqs = [f_min, f_max]
+    total_signal = np.mean(eeg.filtered_signal, axis=0)
+    left_hemisphere_signal, midline_hemisphere_signal, right_hemisphere_signal = hemisphere_signal_avg(eeg, chan_name)
+
+    def masked_spectogram(singal, nperseg=6,nfft=6):
+        # filter it first from f_min to f_max
+        singal = custom_filter(singal, f_min, f_max, fs, 'bandpass')
+
+        frequencies, times, spectrogram = signal.spectrogram(singal, fs=fs, nperseg=fs*nperseg, noverlap=fs*nperseg/2, scaling='spectrum', mode='psd', nfft=fs*nfft)
+        mask = (frequencies >= f_min) & (frequencies <= f_max)
+        spectrogram_masked = spectrogram[mask, :]
+        frequencies_masked = frequencies[mask]
+        return frequencies_masked, times, spectrogram_masked
+    
+    # Plot the spectrogram using matplotlib
+    
+    # fig, axs = plt.subplots(nrows=2, ncols=3,figsize=(15, 6))
+    fig, axs = plt.subplots(nrows=1, ncols=4,figsize=(15, 3))
+    def plot_sepctro(ax, signal, title, nfft, nperseg):
+        frequencies_masked, times, spectrogram_masked = masked_spectogram(signal, nperseg=nperseg,nfft=nfft)
+        ax.pcolormesh(times, frequencies_masked, spectrogram_masked, cmap ='magma')
+        ax.set_ylim(f_min, f_max)
+        ax.set_ylabel('Frequency [Hz]')
+        ax.set_xlabel('Time [sec]')
+        ax.set_title(title)
+        # add yline for stimulus
+        # for stim in eeg.stimulus_frequency:
+        #     ax.axhline(y=stim, color='gray', linestyle='--')
+
+    plot_sepctro(axs[0], left_hemisphere_signal, 'Left Hemisphere Signal', nfft, nperseg)
+    plot_sepctro(axs[1], midline_hemisphere_signal, 'Midline Signal', nfft, nperseg)
+    plot_sepctro(axs[2], right_hemisphere_signal, 'Right Hemisphere Signal', nfft, nperseg)
+    plot_sepctro(axs[3], right_hemisphere_signal-left_hemisphere_signal, 'Delta Signal', nfft, nperseg)
+
+    if title:
+        fig.suptitle(title)
+    plt.tight_layout()
+    plt.show()
+    

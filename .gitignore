@@ -5,6 +5,6 @@ offline_analysis.ipynb
 *.code-workspace
 .ipynb_checkpoints/clinical-checkpoint.ipynb
 /SSVEP-Analysis-Toolbox
-/data/TestData/Liuyin-19April/*
-/data/TestData/Alken-20April/*
-/data/Participants
+data/TestData/Liuyin-19April/*
+data/TestData/Alken-20April
+data/
